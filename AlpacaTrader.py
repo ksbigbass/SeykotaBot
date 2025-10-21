@@ -1,7 +1,11 @@
-from alpaca_trade_api.rest import REST, TimeFrame, TimeFrameUnit
-import alpaca_trade_api as tradeapi
-import pandas as pd
-import scrapeSyms
+from dotenv import load_dotenv
+import os
+   
+load_dotenv()
+   
+API_KEY = os.getenv('ALPACA_API_KEY')
+SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
+base_url = os.getenv('ALPACA_BASE_URL')
 
 
 base_url = "https://paper-api.alpaca.markets"
@@ -10,8 +14,6 @@ base_url = "https://paper-api.alpaca.markets"
 ACCOUNT_URL = "{}/v2/account".format(base_url)
 ORDERS_URL = "{}/v2/orders".format(base_url)
 
-API_KEY = 'PKCUQOO80RTR4BF6B6RX'
-SECRET_KEY = 'qV55hQoLLxWJhuXWumO9E8v1pTsR5bKKidrMncbZ'
 
 HEADERS = {"APCA-API-KEY-ID": API_KEY, "APCA-API-SECRET-KEY": SECRET_KEY}
 
@@ -127,10 +129,10 @@ if __name__ == '__main__':
     trader.set_symbol('APPS')
     # trader.set_symbol_lst(['OILU', 'LXU', 'CRGY', 'BPT', 'SGML', 'AMR', 'ZETA', 'NRT', 'IPI', 'NRGV', 'AR', 'UAN'])
     # trader.quick_order('NOACW')
-    # trader.get_positions()
-    # trader.is_tradeable()
-    # trader.get_is_tradable_lst()
-    # trader.postion_size_lst()
+    trader.get_positions()
+    trader.is_tradeable()
+    trader.get_is_tradable_lst()
+    trader.postion_size_lst()
     trader.todays_win_loss()
     trader.buying_power()
            

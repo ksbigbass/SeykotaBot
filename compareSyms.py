@@ -2,7 +2,14 @@ import pandas as pd
 import scrapeSyms
 import datetime as dt
 import AlpacaTrader
-
+from dotenv import load_dotenv
+import os
+   
+load_dotenv()
+   
+API_KEY = os.getenv('ALPACA_API_KEY')
+SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
+base_url = os.getenv('ALPACA_BASE_URL')
 
 sell = []
 
