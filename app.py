@@ -1,14 +1,12 @@
-"""
-TrendTracker Flask API
-Connects the Alpaca trading bot to the web dashboard
-"""
-
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import os
 from datetime import datetime
 from alpaca.trading.client import TradingClient
 from alpaca.data.historical import StockHistoricalDataClient
+import scrapeSyms
+import compareSyms 
+from AlpacaTrader import Trader  
 
 # Load environment variables
 from dotenv import load_dotenv
@@ -81,12 +79,16 @@ def get_positions():
 
 @app.route('/api/stocks/strong', methods=['GET'])
 def get_strong_stocks():
-    """Get strong stocks from Seykota scraper"""
+    """Get strong stocks from integrated scraper and comparison"""
     try:
-        import scrapeSyms
+        # Integrate: Scrape, compare, and initialize trader
+        symbols = scrapeSyms.strongDf
+        strong_stocks, weak_stocks = scrapeSyms(symbols)
+        trader = Trader()
+        trader.set_stocks(strong_stocks, weak_stocks)
         
         stocks = []
-        for idx, symbol in enumerate(scrapeSyms.strong, 1):
+        for idx, symbol in enumerate(strong_stocks, 1):
             # Parse symbol and name
             if ',' in symbol:
                 sym_part = symbol.split(',')[0].strip()
@@ -113,12 +115,16 @@ def get_strong_stocks():
 
 @app.route('/api/stocks/weak', methods=['GET'])
 def get_weak_stocks():
-    """Get weak stocks from Seykota scraper"""
+    """Get weak stocks from integrated scraper and comparison"""
     try:
-        import scrapeSyms
+        # Integrate: Scrape, compare, and initialize trader
+        symbols = scrapeSyms.weakDf
+        strong_stocks, weak_stocks = scrapeSyms(symbols)
+        trader = Trader()
+        trader.set_stocks(strong_stocks, weak_stocks)
         
         stocks = []
-        for idx, symbol in enumerate(scrapeSyms.weak, 1):
+        for idx, symbol in enumerate(weak_stocks, 1):
             # Parse symbol and name
             if ',' in symbol:
                 sym_part = symbol.split(',')[0].strip()
