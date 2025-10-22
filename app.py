@@ -7,18 +7,22 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import os
 from datetime import datetime
-import alpaca_trade_api as tradeapi
+from alpaca.trading.client import TradingClient
+from alpaca.data.historical import StockHistoricalDataClient
 
-# IMPORTANT: Move these to environment variables!
-API_KEY = os.getenv('ALPACA_API_KEY', 'YOUR_KEY_HERE')
-SECRET_KEY = os.getenv('ALPACA_SECRET_KEY', 'YOUR_SECRET_HERE')
-BASE_URL = 'https://paper-api.alpaca.markets'
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
+API_KEY = os.getenv('ALPACA_API_KEY')
+SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
 
-# Initialize Alpaca API
-api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL, api_version='v2')
+# Initialize Alpaca API with new SDK
+trading_client = TradingClient(API_KEY, SECRET_KEY, paper=True)
+data_client = StockHistoricalDataClient(API_KEY, SECRET_KEY)
 
 @app.route('/')
 def index():
@@ -29,7 +33,7 @@ def index():
 def get_account():
     """Get account information"""
     try:
-        account = api.get_account()
+        account = trading_client.get_account()
         
         data = {
             'balance': float(account.equity),
@@ -38,7 +42,7 @@ def get_account():
             'cash': float(account.cash),
             'portfolioValue': float(account.portfolio_value),
             'todayPnL': float(account.equity) - float(account.last_equity),
-            'status': account.status,
+            'status': account.status.value,
             'timestamp': datetime.now().isoformat()
         }
         
@@ -51,19 +55,19 @@ def get_account():
 def get_positions():
     """Get all current positions"""
     try:
-        positions = api.list_positions()
+        positions = trading_client.get_all_positions()
         
         position_data = []
         for pos in positions:
             position_data.append({
                 'symbol': pos.symbol,
-                'qty': int(pos.qty),
+                'qty': int(float(pos.qty)),
                 'avgPrice': float(pos.avg_entry_price),
                 'currentPrice': float(pos.current_price),
                 'marketValue': float(pos.market_value),
                 'pnl': float(pos.unrealized_pl),
                 'pnlPercent': float(pos.unrealized_plpc) * 100,
-                'side': pos.side
+                'side': pos.side.value
             })
         
         return jsonify({
@@ -83,8 +87,17 @@ def get_strong_stocks():
         
         stocks = []
         for idx, symbol in enumerate(scrapeSyms.strong, 1):
+            # Parse symbol and name
+            if ',' in symbol:
+                sym_part = symbol.split(',')[0].strip()
+                name_part = symbol.split(',')[1].strip() if len(symbol.split(',')) > 1 else 'Unknown'
+            else:
+                sym_part = symbol.strip()
+                name_part = 'Unknown'
+            
             stocks.append({
-                'symbol': symbol,
+                'symbol': sym_part,
+                'name': name_part,
                 'rank': idx,
                 'category': 'strong'
             })
@@ -106,8 +119,17 @@ def get_weak_stocks():
         
         stocks = []
         for idx, symbol in enumerate(scrapeSyms.weak, 1):
+            # Parse symbol and name
+            if ',' in symbol:
+                sym_part = symbol.split(',')[0].strip()
+                name_part = symbol.split(',')[1].strip() if len(symbol.split(',')) > 1 else 'Unknown'
+            else:
+                sym_part = symbol.strip()
+                name_part = 'Unknown'
+            
             stocks.append({
-                'symbol': symbol,
+                'symbol': sym_part,
+                'name': name_part,
                 'rank': idx + 15,  # Weak stocks start at rank 16
                 'category': 'weak'
             })
@@ -147,3 +169,31 @@ def scan_and_trade():
             except Exception as e:
                 results.append({
                     'symbol': symbol,
+                    'status': 'error',
+                    'error': str(e),
+                    'success': False
+                })
+        
+        return jsonify({
+            'results': results,
+            'total': len(results),
+            'successful': len([r for r in results if r['success']]),
+            'timestamp': datetime.now().isoformat()
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    })
+
+if __name__ == '__main__':
+    print("Starting TrendTracker API...")
+    print(f"Dashboard: http://localhost:5000")
+    print(f"API Docs: http://localhost:5000/api/health")
+    app.run(debug=True, host='0.0.0.0', port=5000)
