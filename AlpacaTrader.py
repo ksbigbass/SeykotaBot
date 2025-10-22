@@ -187,12 +187,12 @@ class AlpacaTrader(object):
 
 if __name__ == '__main__':
     trader = AlpacaTrader()
-    trader.set_symbol('APPS')
+    #trader.set_symbol('APPS')
     # trader.set_symbol_lst(['OILU', 'LXU', 'CRGY', 'BPT', 'SGML', 'AMR', 'ZETA', 'NRT', 'IPI', 'NRGV', 'AR', 'UAN'])
     # trader.quick_order('NOACW')
     trader.get_positions()
-    trader.is_tradeable()
-    trader.get_is_tradable_lst()
+    #trader.is_tradeable()
+    #trader.get_is_tradable_lst()
     # trader.postion_size_lst()
     trader.todays_win_loss()
     trader.buying_power()

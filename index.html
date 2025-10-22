@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrendTracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; }
+        .strong { color: green; }
+        .weak { color: red; }
+        h1 { text-align: center; }
+        .stock-list { column-count: 2; }
+        .stock-item { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TrendTracker</h1>
+        
+        <div class="section" id="trader-info">
+            <!-- Trader data will be loaded here -->
+        </div>
+        
+        <div class="section" id="positions">
+            <!-- Positions will be loaded here -->
+        </div>
+        
+        <div class="section">
+            <h2 class="strong">Strong Stocks</h2>
+            <div class="stock-list" id="strong-stocks">
+                <!-- Dynamic strong stocks -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="weak">Weak Stocks</h2>
+            <div class="stock-list" id="weak-stocks">
+                <!-- Dynamic weak stocks -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load account info (includes todays_win_loss and buying_power)
+        fetch('/api/account')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('trader-info').innerHTML = `
+                    <h2>Account Info</h2>
+                    <p>Today's Win/Loss: $${data.todayPnL.toFixed(2)}</p>
+                    <p>Buying Power: $${data.buyingPower}</p>
+                    <p>Cash: $${data.cash}</p>
+                `;
+            })
+            .catch(error => console.error('Error loading account info:', error));
+        
+        // Load positions (from get_positions)
+        fetch('/api/positions')
+            .then(response => response.json())
+            .then(data => {
+                let html = '<h2>Positions</h2>';
+                if (data.positions.length === 0) {
+                    html += '<p>No open positions.</p>';
+                } else {
+                    html += '<ul>';
+                    data.positions.forEach(pos => {
+                        html += `<li>${pos.symbol}: ${pos.qty} shares @ $${pos.avgPrice} (PnL: $${pos.pnl.toFixed(2)})</li>`;
+                    });
+                    html += '</ul>';
+                }
+                document.getElementById('positions').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading positions:', error));
+        
+        // Load strong stocks
+        fetch('/api/stocks/strong')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                data.stocks.forEach(stock => {
+                    html += `<div class="stock-item">${stock.symbol} - ${stock.name}</div>`;
+                });
+                document.getElementById('strong-stocks').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading strong stocks:', error));
+        
+        // Load weak stocks
+        fetch('/api/stocks/weak')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                data.stocks.forEach(stock => {
+                    html += `<div class="stock-item">${stock.symbol} - ${stock.name}</div>`;
+                });
+                document.getElementById('weak-stocks').innerHTML = html;
+            })
+            .catch(error => console.error('Error loading weak stocks:', error));
+    </script>
+</body>
+</html>
