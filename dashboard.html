@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendTracker Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, RefreshCw, DollarSign, Activity } = (() => {
+            // Lucide icons as inline SVG components
+            const TrendingUp = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
+            const TrendingDown = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" /></svg>;
+            const AlertTriangle = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
+            const CheckCircle = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+            const XCircle = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+            const RefreshCw = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
+            const DollarSign = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+            const Activity = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
+            
+            return { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, RefreshCw, DollarSign, Activity };
+        })();
+
+        const TrendTrackerDashboard = () => {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            const loadData = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch('/api/dashboard-data');
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        setData(result);
+                        setError(null);
+                    } else {
+                        setError(result.error || 'Failed to load data');
+                    }
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                loadData();
+                const interval = setInterval(loadData, 30000); // Refresh every 30s
+                return () => clearInterval(interval);
+            }, []);
+
+            if (loading && !data) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+                        <div className="text-white text-xl">Loading TrendTracker...</div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+                        <div className="text-red-400 text-xl">Error: {error}</div>
+                    </div>
+                );
+            }
+
+            const { account, positions, analysis, strongStocks, weakStocks } = data;
+            const totalPnL = positions.reduce((sum, pos) => sum + pos.pnl, 0);
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
+                    {/* Header */}
+                    <div className="max-w-7xl mx-auto mb-8">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                                    TrendTracker
+                                </h1>
+                                <p className="text-slate-400">Position Manager • {new Date().toLocaleDateString()}</p>
+                            </div>
+                            <button 
+                                onClick={loadData}
+                                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg transition-colors"
+                            >
+                                <RefreshCw />
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Alert Banner */}
+                    <div className="max-w-7xl mx-auto mb-6">
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle />
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-orange-300 mb-2">PORTFOLIO STATUS</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                        <div>
+                                            <div className="text-slate-300">Total Positions</div>
+                                            <div className="text-xl font-bold text-white">{analysis.totalPositions}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-slate-300">Still Strong</div>
+                                            <div className="text-xl font-bold text-green-400">{analysis.stillStrong}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-slate-300">No Longer Strong</div>
+                                            <div className="text-xl font-bold text-red-400">{analysis.noLongerStrong}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-slate-300">Overlap</div>
+                                            <div className="text-xl font-bold text-slate-400">
+                                                {analysis.totalPositions > 0 ? Math.round((analysis.stillStrong / analysis.totalPositions) * 100) : 0}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Account Summary */}
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <TrendingDown />
+                                <h2 className="text-xl font-bold">Weak Stocks (16-30)</h2>
+                            </div>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {weakStocks.map((stock) => (
+                                    <div key={stock.symbol} className="bg-red-500/10 border border-red-500/20 rounded p-3 hover:bg-red-500/20 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-red-500/20 text-red-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                                                    {stock.rank}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-red-300">{stock.symbol}</div>
+                                                    <div className="text-xs text-slate-400">{stock.name}</div>
+                                                </div>
+                                            </div>
+                                            <TrendingDown />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Positions Table */}
+                    <div className="max-w-7xl mx-auto mt-6">
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <h2 className="text-xl font-bold mb-4">Current Positions ({positions.length})</h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b border-slate-700">
+                                            <th className="text-left py-3 px-4 font-semibold text-slate-300">Symbol</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-slate-300">Shares</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-slate-300">Avg Price</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-slate-300">Current</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-slate-300">P/L</th>
+                                            <th className="text-right py-3 px-4 font-semibold text-slate-300">P/L %</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-300">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {positions.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="text-center py-8 text-slate-400">
+                                                    No open positions
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            positions.map((pos) => (
+                                                <tr key={pos.symbol} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                                                    <td className="py-3 px-4 font-bold">{pos.symbol}</td>
+                                                    <td className="py-3 px-4 text-right">{pos.qty}</td>
+                                                    <td className="py-3 px-4 text-right">${pos.avgPrice.toFixed(2)}</td>
+                                                    <td className="py-3 px-4 text-right">${pos.currentPrice.toFixed(2)}</td>
+                                                    <td className={`py-3 px-4 text-right font-semibold ${pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toFixed(2)}
+                                                    </td>
+                                                    <td className={`py-3 px-4 text-right ${pos.pnlPercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {pos.pnlPercent >= 0 ? '+' : ''}{pos.pnlPercent.toFixed(2)}%
+                                                    </td>
+                                                    <td className="py-3 px-4 text-center">
+                                                        {pos.status === 'strong' ? (
+                                                            <span className="inline-flex items-center gap-1 text-green-400">
+                                                                <CheckCircle />
+                                                                Strong
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 text-orange-400">
+                                                                <XCircle />
+                                                                Weak
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                    {positions.length > 0 && (
+                                        <tfoot>
+                                            <tr className="border-t-2 border-slate-600 font-bold">
+                                                <td className="py-3 px-4" colSpan="4">Total P/L</td>
+                                                <td className={`py-3 px-4 text-right text-lg ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
+                                                </td>
+                                                <td colSpan="2"></td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<TrendTrackerDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html> border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-slate-400">Portfolio Value</span>
+                                <DollarSign />
+                            </div>
+                            <div className="text-3xl font-bold">${account.balance.toLocaleString()}</div>
+                            <div className={`text-sm mt-2 ${account.todayPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {account.todayPnL >= 0 ? '+' : ''}{account.todayPnL.toFixed(2)} today
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-slate-400">Buying Power</span>
+                                <Activity />
+                            </div>
+                            <div className="text-3xl font-bold">${account.buyingPower.toLocaleString()}</div>
+                            <div className="text-sm mt-2 text-slate-400">
+                                ${account.cash.toLocaleString()} cash
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-slate-400">Total P/L</span>
+                                <Activity />
+                            </div>
+                            <div className={`text-3xl font-bold ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
+                            </div>
+                            <div className="text-sm mt-2 text-slate-400">
+                                {positions.length} positions
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Strong/Weak Stocks Grid */}
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <TrendingUp />
+                                <h2 className="text-xl font-bold">Strong Stocks (Top 15)</h2>
+                            </div>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {strongStocks.map((stock) => (
+                                    <div key={stock.symbol} className="bg-green-500/10 border border-green-500/20 rounded p-3 hover:bg-green-500/20 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-green-500/20 text-green-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                                                    {stock.rank}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-green-300">{stock.symbol}</div>
+                                                    <div className="text-xs text-slate-400">{stock.name}</div>
+                                                </div>
+                                            </div>
+                                            <TrendingUp />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-lg p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <TrendingDown />
+                                <h2 className="text-xl font-bold">Weak Stocks (16-30)</h2>
+                            </div>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {weakStocks.map((stock) => (
+                                    <div key={stock.symbol} className="bg-red-500/10 border border-red-500/20 rounded p-3 hover:bg-red-500/20 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-red-500/20 text-red-300 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                                                    {stock.rank}
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-red-300">{stock.symbol}</div>
+                                                    <div className="text-xs text-slate-400">{stock.name}</div>
+                                                </div>
+                                            </div>
+                                            <TrendingDown />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };      
