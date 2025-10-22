@@ -1,11 +1,16 @@
 from dotenv import load_dotenv
 import os
-   
+from alpaca.trading.client import TradingClient
+
+
 load_dotenv()
    
 API_KEY = os.getenv('ALPACA_API_KEY')
 SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
 base_url = os.getenv('ALPACA_BASE_URL')
+
+trading_client = TradingClient(API_KEY, SECRET_KEY, paper=True)
+
 
 
 base_url = "https://paper-api.alpaca.markets"

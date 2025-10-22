@@ -1,5 +1,24 @@
-pandas>=2.0.0
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-from dotenv import load_dotenv
-import os
+
+
+# Data manipulation and analysis
+pandas==2.0.3
+numpy==1.24.3
+
+# Web scraping
+requests==2.31.0
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# Flask web framework and CORS support
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Date and time utilities (standard library, but listing for completeness)
+# datetime - included in Python standard library
+
+# Additional useful packages for trading bots
+pytz==2023.3  # Timezone handling for market hours
+python-dateutil==2.8.2  # Enhanced date parsing
